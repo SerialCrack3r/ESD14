@@ -1,7 +1,4 @@
 #!/usr/bin/env python
-__author__   = "rekcah"
-__email__    = "rekcah@keabyte.com"
-__desc__     = "For educational purposes only ;)"
 
 import socket, sys
 
@@ -11,12 +8,9 @@ from struct import *
 class Knocker :
     _key = 2293
     def __init__(self, server, port):
-        self.obfuscatedPort = port ^ (Knocker._key * 25)    # Obfuscation of the xor key
+        self.obfuscatedPort = port ^ (Knocker._key * 25)    # Obfuscation of the port with the complete xor key
         self.port = port
         self.server = server
-        print("obfuscated port = > %d" % self.obfuscatedPort)
-        print("real porat => %d" % self.port)
-        print("server ip : => %s" % self.server)
 
     def getRealPort(self):
         return self.port
@@ -31,14 +25,12 @@ class Knocker :
         return s.getsockname()[0]
 
     def knock(self):
-        print("---> knock function <---")
         # create a raw socket
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_TCP)
         except Exception as e:
             print("Socket could not be created. Message : %s" % str(e))
             sys.exit()
-        print("kkkkkkk")
         # tell kernel not to put in headers, since we are providing it
         s.setsockopt(socket.IPPROTO_IP, socket.IP_HDRINCL, 1)
 
@@ -110,10 +102,9 @@ class Knocker :
         packet = ip_header + tcp_hdr
 
         # Send the packet finally - the port specified has no effect
-        print("sending packet...")
+
         s.sendto(packet, (dest_ip, 0))      # Send our that'll hit the firewall, 3 times to make sure it works
-        s.sendto(packet, (dest_ip, 0))
-        s.sendto(packet, (dest_ip, 0))
+
         return
 
 

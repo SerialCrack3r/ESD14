@@ -2,7 +2,6 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/rat_by_rekcah.iml" filepath="$PROJECT_DIR$/.idea/rat_by_rekcah.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/snitch_by_rekcah.iml" filepath="$PROJECT_DIR$/.idea/snitch_by_rekcah.iml" />
     </modules>
   </component>
