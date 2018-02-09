@@ -1,0 +1,19 @@
+missing module named nt - imported by os, ntpath, shutil, /root/ESD14/snitch_by_rekcah/src/client.py
+missing module named org - imported by pickle, /root/ESD14/snitch_by_rekcah/src/client.py
+excluded module named _frozen_importlib - imported by importlib, importlib.abc, /root/ESD14/snitch_by_rekcah/src/client.py
+missing module named _frozen_importlib_external - imported by importlib._bootstrap, importlib, importlib.abc, /root/ESD14/snitch_by_rekcah/src/client.py
+missing module named _winreg - imported by platform, /root/ESD14/snitch_by_rekcah/src/client.py
+missing module named _scproxy - imported by urllib.request
+missing module named java - imported by platform, /root/ESD14/snitch_by_rekcah/src/client.py
+missing module named 'java.lang' - imported by platform, /root/ESD14/snitch_by_rekcah/src/client.py, xml.sax._exceptions
+missing module named vms_lib - imported by platform, /root/ESD14/snitch_by_rekcah/src/client.py
+missing module named winreg - imported by platform, mimetypes, /root/ESD14/snitch_by_rekcah/src/client.py, urllib.request
+missing module named 'org.python' - imported by copy, /root/ESD14/snitch_by_rekcah/src/client.py, xml.sax
+missing module named msvcrt - imported by subprocess, /root/ESD14/snitch_by_rekcah/src/client.py, getpass
+missing module named _winapi - imported by subprocess, /root/ESD14/snitch_by_rekcah/src/client.py
+missing module named _dummy_threading - imported by dummy_threading, /root/ESD14/snitch_by_rekcah/src/client.py
+missing module named psutil._psutil_aix - imported by psutil, psutil._psaix
+missing module named psutil._psutil_sunos - imported by psutil, psutil._pssunos
+missing module named psutil._psutil_bsd - imported by psutil, psutil._psbsd
+missing module named psutil._psutil_osx - imported by psutil, psutil._psosx
+missing module named psutil._psutil_windows - imported by psutil, psutil._pswindows
